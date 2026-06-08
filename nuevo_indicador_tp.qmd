@@ -4,6 +4,8 @@ format: html
 Authors: Adonis, Luis; Ferreyra, Lorenzo; Milianovich, Franco
 ---
 
+Para reproducir el entorno: abrir el proyecto en RStudio/Positron y ejecutar `renv::restore()` en la consola. Esto instala todas las dependencias necesarias.
+
 ```{r}
 renv::init()
 ```
@@ -11,6 +13,8 @@ renv::init()
 ```{r}
 library(tidyverse)
 library(readxl)
+library(scales)
+library(DT)
 ```
 
 Abrimos los dos excels de interés
@@ -103,9 +107,113 @@ formales_df <- formales_df |>
   left_join(cbt_long, by = c("ANO4", "REGION"))
 ```
 
-Verif
+Tabla de resumen
 
 
 ```{r}
 formales_df |> select(ANO4, REGION, cbt_valor) |> head(10)
+```
+
+## métrica A: tasa de trabajadores pobres según Jornada Laboral
+
+Clasificamos a cada trabajador formal como "pobre" si su ingreso de la ocupación principal (P21) no alcanza a cubrir la Canasta Básica Total de su región. Cabe aclarar que la CBT está expresada por adulto equivalente, es decir, representa el costo de cubrir las necesidades básicas de un adulto de referencia (varón de 30-60 años). Por lo tanto, lo que medimos aquí es si el salario individual del trabajador formal alcanza al menos para cubrir sus propias necesidades básicas, sin considerar la carga familiar. Esta es una simplificación metodológica, puesto que en la práctica, muchos trabajadores deben sostener hogares con varios miembros. Aún así, no alcanzar la CBT individual es un umbral mínimo que evidencia con claridad la insuficiencia del ingreso laboral.
+
+```{r}
+formales_df <- formales_df |>
+  mutate(trabajador_pobre = ifelse(P21 < cbt_valor, 1, 0))
+```
+
+Calculamos la tasa de trabajadores pobres por tipo de jornada y año.
+
+```{r}
+tasa_por_jornada <- formales_df |>
+  filter(!is.na(jornada), !is.na(trabajador_pobre)) |>
+  group_by(ANO4, jornada) |>
+  summarise(
+    n = n(),
+    pobres = sum(trabajador_pobre),
+    tasa = mean(trabajador_pobre) * 100,
+    .groups = "drop"
+  )
+
+tasa_por_jornada
+```
+
+### Gráfico: Tasa de trabajadores pobres por jornada y año
+
+```{r}
+
+
+ggplot(tasa_por_jornada, aes(x = jornada, y = tasa, fill = factor(ANO4))) +
+  geom_col(position = "dodge", width = 0.7) +
+  geom_text(
+    aes(label = paste0(round(tasa, 1), "%")),
+    position = position_dodge(width = 0.7),
+    vjust = -0.5, size = 3.5
+  ) +
+  scale_fill_manual(
+    values = c("2024" = "#2c7fb8", "2025" = "#de2d26"),
+    name = "Año"
+  ) +
+  labs(
+    title = "Tasa de trabajadores pobres formales según jornada laboral",
+    subtitle = "Ingreso ocupación principal (P21) vs. CBT regional. 4to trimestre",
+    x = "Tipo de jornada",
+    y = "Tasa (%)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top") +
+  ylim(0, NA)
+```
+
+### Tasa general (sin desagregar por jornada)
+
+```{r}
+tasa_general <- formales_df |>
+  filter(!is.na(trabajador_pobre)) |>
+  group_by(ANO4) |>
+  summarise(
+    n = n(),
+    pobres = sum(trabajador_pobre),
+    tasa = mean(trabajador_pobre) * 100,
+    .groups = "drop"
+  )
+
+tasa_general
+```
+
+```{r}
+ggplot(tasa_general, aes(x = factor(ANO4), y = tasa, fill = factor(ANO4))) +
+  geom_col(width = 0.5) +
+  geom_text(aes(label = paste0(round(tasa, 1), "%")), vjust = -0.5, size = 4) +
+  scale_fill_manual(values = c("2024" = "#2c7fb8", "2025" = "#de2d26")) +
+  labs(
+    title = "Tasa General de Trabajadores Pobres Formales",
+    subtitle = "4to trimestre — P21 vs. CBT regional",
+    x = "Año",
+    y = "Tasa (%)"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none") +
+  ylim(0, NA)
+```
+
+### Tabla resumen
+
+```{r}
+
+tabla_resumen <- tasa_por_jornada |>
+  mutate(tasa = round(tasa, 2)) |>
+  pivot_wider(
+    names_from = ANO4,
+    values_from = c(n, pobres, tasa),
+    names_glue = "{.value}_{ANO4}"
+  )
+
+datatable(
+  tabla_resumen,
+  caption = "Trabajadores pobres formales por tipo de jornada (4T 2024 vs 4T 2025)",
+  options = list(dom = "t", pageLength = 5),
+  rownames = FALSE
+)
 ```
