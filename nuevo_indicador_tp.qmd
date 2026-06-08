@@ -185,7 +185,7 @@ ggplot(tasa_general, aes(x = factor(ANO4), y = tasa, fill = factor(ANO4))) +
   geom_text(aes(label = paste0(round(tasa, 1), "%")), vjust = -0.5, size = 4) +
   scale_fill_manual(values = c("2024" = "#2c7fb8", "2025" = "#de2d26")) +
   labs(
-    title = "Tasa General de Trabajadores Pobres Formales",
+    title = "Tasa general de trabajadores pobres formales",
     subtitle = "4to trimestre — P21 vs. CBT regional",
     x = "Año",
     y = "Tasa (%)"
