@@ -8,7 +8,6 @@ Authors: Adonis, Luis; Ferreyra, Lorenzo; Milianovich, Franco
 renv::init()
 ```
 
-
 ```{r}
 library(tidyverse)
 library(readxl)
@@ -23,23 +22,26 @@ cbt_archivo <- "data/canasta-basica-total-regiones-del-pais.csv"
 ```
 
 ```{r}
-eph_df_2025 <- read.csv(eph_archivo_2025, sep=";", encoding="UTF-8")
-eph_df_2024 <- read.csv(eph_archivo_2024, sep=";", encoding="UTF-8")
+eph_df_2025 <- read.csv(eph_archivo_2025, sep=";", encoding="UTF-8", colClasses="character")
+eph_df_2024 <- read.csv(eph_archivo_2024, sep=";", encoding="UTF-8", colClasses="character")
 cbt_df <- read_csv(cbt_archivo)
 ```
 
 El primer paso es unir ambos trimestres de interés y lograr un solo df con la operación UNION, bind_rows en tidyverse
 
 ```{r}
-eph_df <- bind_rows(eph_df_2025, eph_df_2024)
+eph_df <- bind_rows(eph_df_2025, eph_df_2024) |>
+  mutate(
+    EMPLEO   = as.numeric(EMPLEO),
+    P21      = as.numeric(P21),
+    P47T     = as.numeric(P47T),
+    PP3E_TOT = as.numeric(PP3E_TOT),
+    ANO4     = as.numeric(ANO4),
+    REGION   = as.numeric(REGION)
+  )
 ```
 
-Empezamos trabajando en el archivo de la EPH. Vamos a filtrar por los trabajadores formales.
-Para eso usaremos la variable EMPLEO, que nos dice directamente si la persona está registrada en un régimen de trabajo formal.
-En esta, los valores representan lo siguiente:
-1 = Formal
-2 = Informal
-9 = Ns/Nr
+Empezamos trabajando en el archivo de la EPH. Vamos a filtrar por los trabajadores formales. Para eso usaremos la variable EMPLEO, que nos dice directamente si la persona está registrada en un régimen de trabajo formal. En esta, los valores representan lo siguiente: 1 = Formal 2 = Informal 9 = Ns/Nr
 
 ```{r}
 formales_df <- eph_df |>
@@ -47,7 +49,6 @@ formales_df <- eph_df |>
 ```
 
 La idea es desagregar los trabajadores según las horas trabajadas (PP03D), dividiendo a los trabajadores en "subocupados" (menos de 35 hs), "jornada plena" (35-45 hs) o "sobreocupados" (más de 45 hs). Así se verá si el fenómeno del "trabajador pobre" afecta incluso a quienes cumplen jornadas completas.
-
 
 ```{r}
 formales_df <- formales_df |>
@@ -58,7 +59,7 @@ formales_df <- formales_df |>
   ))
 ```
 
-Seguimos con la Canasta Básica Total (CBT).
+Seguimos con la Canasta Básica Total (CBT). El objetivo es quedarse con dos puntos de interés en el tiempo, el cuarto trimestre de 2025 y su equivalente del año 2024.
 
 ```{r}
 
