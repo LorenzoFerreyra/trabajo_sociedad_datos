@@ -59,8 +59,18 @@ formales_df <- formales_df |>
   ))
 ```
 
-Seguimos con la Canasta Básica Total (CBT). El objetivo es quedarse con dos puntos de interés en el tiempo, el cuarto trimestre de 2025 y su equivalente del año 2024.
+Seguimos con la Canasta Básica Total (CBT). El objetivo es quedarse con dos puntos de interés en el tiempo, el cuarto trimestre de 2025 y su equivalente del año 2024. También se saca un promedio de los meses dentro del trimestre, dado que originalmente tenemos distintas dimensiones de tiempo en ambos datasets.
 
 ```{r}
+cbt_4t_2024 <- cbt_df |>
+  filter(indice_tiempo >= "2024-10-01", indice_tiempo <= "2024-12-01") |>
+  summarise(across(where(is.numeric), mean)) |>
+  mutate(ANO4 = 2024, TRIMESTRE = 4)
 
+cbt_4t_2025 <- cbt_df |>
+  filter(indice_tiempo >= "2025-10-01", indice_tiempo <= "2025-12-01") |>
+  summarise(across(where(is.numeric), mean)) |>
+  mutate(ANO4 = 2025, TRIMESTRE = 4)
+
+cbt_trimestres <- bind_rows(cbt_4t_2024, cbt_4t_2025)
 ```
