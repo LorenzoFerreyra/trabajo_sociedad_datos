@@ -1,4 +1,4 @@
-### Fuente de 
+### Fuente de docs
 
 Canasta básica total por regiones: https://datos.gob.ar/dataset/sspm-canasta-basica-total-regiones-pais/archivo/sspm_446.1
 
