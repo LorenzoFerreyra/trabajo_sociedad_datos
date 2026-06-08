@@ -4,8 +4,6 @@ format: html
 Authors: Adonis, Luis; Ferreyra, Lorenzo; Milianovich, Franco
 ---
 
-Para reproducir el entorno: abrir el proyecto en RStudio/Positron y ejecutar `renv::restore()` en la consola. Esto instala todas las dependencias necesarias.
-
 ```{r}
 renv::init()
 ```
@@ -13,7 +11,6 @@ renv::init()
 ```{r}
 library(tidyverse)
 library(readxl)
-library(scales)
 library(DT)
 ```
 

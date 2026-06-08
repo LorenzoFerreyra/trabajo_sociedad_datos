@@ -6,5 +6,8 @@ EPH cuarto trimestre de 2025: https://www.indec.gob.ar/ftp/cuadros/menusuperior/
 
 EPH cuarto trimestre de 2024: https://www.indec.gob.ar/ftp/cuadros/menusuperior/eph/EPH_usu_4_Trim_2024_txt.zip
 
+## Instalación de dependencias
+Abrir el proyecto en RStudio/Positron y ejecutar `renv::restore()` en la consola.
+
 ## Para renderizar versiones finales, correr:
 quarto render {file_name}.qmd
