@@ -74,3 +74,38 @@ cbt_4t_2025 <- cbt_df |>
 
 cbt_trimestres <- bind_rows(cbt_4t_2024, cbt_4t_2025)
 ```
+
+La idea ahora es hacer el join con formales_df. El problema es que la CBT está en formato ancho (una columna por región) y la EPH tiene la región como un código numérico en la columna REGION. Para ello, la idea es  pivotear la CBT a formato largo y mapear los códigos uno a uno.
+
+
+```{r}
+cbt_long <- cbt_trimestres |>
+  pivot_longer(
+    cols = c(gran_buenos_aires, cuyo, noreste, noroeste, pampeana, patagonia),
+    names_to = "region_nombre",
+    values_to = "cbt_valor"
+  ) |>
+  mutate(REGION = case_when(
+    region_nombre == "gran_buenos_aires" ~ 01,
+    region_nombre == "noroeste"          ~ 40,
+    region_nombre == "noreste"           ~ 41,
+    region_nombre == "cuyo"              ~ 42,
+    region_nombre == "pampeana"          ~ 43,
+    region_nombre == "patagonia"         ~ 44
+  ))
+```
+
+Join con formales_df
+
+
+```{r}
+formales_df <- formales_df |>
+  left_join(cbt_long, by = c("ANO4", "REGION"))
+```
+
+Verif
+
+
+```{r}
+formales_df |> select(ANO4, REGION, cbt_valor) |> head(10)
+```
