@@ -111,7 +111,7 @@ Tabla de resumen
 formales_df |> select(ANO4, REGION, cbt_valor) |> head(10)
 ```
 
-## métrica A: tasa de trabajadores pobres según Jornada Laboral
+## métrica A: tasa de trabajadores pobres según jornada laboral (part-time, completa, sobreocupado)
 
 Clasificamos a cada trabajador formal como "pobre" si su ingreso de la ocupación principal (P21) no alcanza a cubrir la Canasta Básica Total de su región. Cabe aclarar que la CBT está expresada por adulto equivalente, es decir, representa el costo de cubrir las necesidades básicas de un adulto de referencia (varón de 30-60 años). Por lo tanto, lo que medimos aquí es si el salario individual del trabajador formal alcanza al menos para cubrir sus propias necesidades básicas, sin considerar la carga familiar. Esta es una simplificación metodológica, puesto que en la práctica, muchos trabajadores deben sostener hogares con varios miembros. Aún así, no alcanzar la CBT individual es un umbral mínimo que evidencia con claridad la insuficiencia del ingreso laboral.
 
