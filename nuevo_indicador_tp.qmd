@@ -1,0 +1,65 @@
+---
+title: "Creación de un indicador propio con base en la EPH y la canasta básica total"
+format: html
+Authors: Adonis, Luis; Ferreyra, Lorenzo; Milianovich, Franco
+---
+
+```{r}
+renv::init()
+```
+
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+Abrimos los dos excels de interés
+
+```{r}
+eph_archivo_2025 <- "data/usu_individual_T425.txt"
+eph_archivo_2024 <- "data/usu_individual_T424.txt"
+cbt_archivo <- "data/canasta-basica-total-regiones-del-pais.csv"
+```
+
+```{r}
+eph_df_2025 <- read.csv(eph_archivo_2025, sep=";", encoding="UTF-8")
+eph_df_2024 <- read.csv(eph_archivo_2024, sep=";", encoding="UTF-8")
+cbt_df <- read_csv(cbt_archivo)
+```
+
+El primer paso es unir ambos trimestres de interés y lograr un solo df con la operación UNION, bind_rows en tidyverse
+
+```{r}
+eph_df <- bind_rows(eph_df_2025, eph_df_2024)
+```
+
+Empezamos trabajando en el archivo de la EPH. Vamos a filtrar por los trabajadores formales.
+Para eso usaremos la variable EMPLEO, que nos dice directamente si la persona está registrada en un régimen de trabajo formal.
+En esta, los valores representan lo siguiente:
+1 = Formal
+2 = Informal
+9 = Ns/Nr
+
+```{r}
+formales_df <- eph_df |>
+  filter(EMPLEO == 1)
+```
+
+La idea es desagregar los trabajadores según las horas trabajadas (PP03D), dividiendo a los trabajadores en "subocupados" (menos de 35 hs), "jornada plena" (35-45 hs) o "sobreocupados" (más de 45 hs). Así se verá si el fenómeno del "trabajador pobre" afecta incluso a quienes cumplen jornadas completas.
+
+
+```{r}
+formales_df <- formales_df |>
+  mutate(jornada = case_when(
+    PP3E_TOT < 35  ~ "jornada_parcial",
+    PP3E_TOT <= 48 ~ "jornada_plena",
+    PP3E_TOT > 48  ~ "sobreocupado"
+  ))
+```
+
+Seguimos con la Canasta Básica Total (CBT).
+
+```{r}
+
+```
