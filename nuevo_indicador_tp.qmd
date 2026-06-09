@@ -186,7 +186,7 @@ ggplot(tasa_general, aes(x = factor(ANO4), y = tasa, fill = factor(ANO4))) +
   scale_fill_manual(values = c("2024" = "#2c7fb8", "2025" = "#de2d26")) +
   labs(
     title = "Tasa general de trabajadores pobres formales",
-    subtitle = "4to trimestre — P21 vs. CBT regional",
+    subtitle = "4to trimestre (P21 vs. CBT regional)",
     x = "Año",
     y = "Tasa (%)"
   ) +
@@ -266,7 +266,7 @@ ggplot(salario_comparado, aes(x = reorder(region_nombre, delta_poder_adq),
   scale_fill_manual(values = c("Cayó" = "#de2d26", "Subió / Estable" = "#2c7fb8")) +
   labs(
     title    = "Variación del poder adquisitivo real por región",
-    subtitle = "Diferencia en CBTs cubiertas por el salario mediano — 4T2024 vs. 4T2025",
+    subtitle = "Diferencia en CBT cubiertas por el salario mediano (4T2024 vs. 4T2025)",
     x        = NULL,
     y        = " CBTs cubiertas",
     fill     = NULL
@@ -343,7 +343,7 @@ ggplot(tasa_por_region, aes(x = reorder(region_nombre, delta_tasa),
   scale_fill_manual(values = c("Aumentó" = "#de2d26", "Bajó / Estable" = "#2c7fb8")) +
   labs(
     title    = "Variación en la tasa de trabajadores pobres formales por región",
-    subtitle = "Diferencia en puntos porcentuales — 4T2024 vs. 4T2025",
+    subtitle = "Diferencia en puntos porcentuales (4T2024 vs. 4T2025)",
     x        = NULL,
     y        = "puntos porcentuales",
     fill     = NULL
