@@ -14,7 +14,7 @@ library(readxl)
 library(DT)
 ```
 
-Abrimos los dos excels de interés
+Se definen las rutas a los archivos fuente: la EPH individual para ambos trimestres y la Canasta Básica Total por región.
 
 ```{r}
 eph_archivo_2025 <- "data/usu_individual_T425.txt"
@@ -28,7 +28,7 @@ eph_df_2024 <- read.csv(eph_archivo_2024, sep=";", encoding="UTF-8", colClasses=
 cbt_df <- read_csv(cbt_archivo)
 ```
 
-El primer paso es unir ambos trimestres de interés y lograr un solo df con la operación UNION, bind_rows en tidyverse
+Se unifican ambos trimestres en un único dataframe y se convierten las variables de interés a formato numérico.
 
 ```{r}
 eph_df <- bind_rows(eph_df_2025, eph_df_2024) |>
@@ -42,14 +42,14 @@ eph_df <- bind_rows(eph_df_2025, eph_df_2024) |>
   )
 ```
 
-Empezamos trabajando en el archivo de la EPH. Vamos a filtrar por los trabajadores formales. Para eso usaremos la variable EMPLEO, que nos dice directamente si la persona está registrada en un régimen de trabajo formal. En esta, los valores representan lo siguiente: 1 = Formal 2 = Informal 9 = Ns/Nr
+Se filtra el universo de análisis a los trabajadores formales, identificados mediante la variable `EMPLEO` (1 = Formal, 2 = Informal, 9 = Ns/Nr).
 
 ```{r}
 formales_df <- eph_df |>
   filter(EMPLEO == 1)
 ```
 
-La idea es desagregar los trabajadores según las horas trabajadas (PP03D), dividiendo a los trabajadores en "subocupados" (menos de 35 hs), "jornada plena" (35-45 hs) o "sobreocupados" (más de 45 hs). Así se verá si el fenómeno del "trabajador pobre" afecta incluso a quienes cumplen jornadas completas.
+Se clasifica a los trabajadores según sus horas semanales (`PP3E_TOT`): jornada parcial (menos de 35 hs), jornada plena (35–48 hs) o sobreocupado (más de 48 hs). Esta desagregación permite evaluar si la insuficiencia de ingresos afecta incluso a quienes cumplen jornadas completas.
 
 ```{r}
 formales_df <- formales_df |>
@@ -60,7 +60,7 @@ formales_df <- formales_df |>
   ))
 ```
 
-Seguimos con la Canasta Básica Total (CBT). El objetivo es quedarse con dos puntos de interés en el tiempo, el cuarto trimestre de 2025 y su equivalente del año 2024. También se saca un promedio de los meses dentro del trimestre, dado que originalmente tenemos distintas dimensiones de tiempo en ambos datasets.
+Se extraen los valores de la CBT correspondientes al 4° trimestre de 2024 y de 2025, promediando los tres meses de cada trimestre para compatibilizar la temporalidad con la EPH.
 
 ```{r}
 cbt_4t_2024 <- cbt_df |>
@@ -76,7 +76,7 @@ cbt_4t_2025 <- cbt_df |>
 cbt_trimestres <- bind_rows(cbt_4t_2024, cbt_4t_2025)
 ```
 
-La idea ahora es hacer el join con formales_df. El problema es que la CBT está en formato ancho (una columna por región) y la EPH tiene la región como un código numérico en la columna REGION. Para ello, la idea es  pivotear la CBT a formato largo y mapear los códigos uno a uno.
+Se pivotea la CBT a formato largo y se mapean los nombres de región a los códigos numéricos de la EPH, para permitir el join entre ambas fuentes.
 
 
 ```{r}
@@ -96,31 +96,29 @@ cbt_long <- cbt_trimestres |>
   ))
 ```
 
-Join con formales_df
-
+Se incorpora el valor de la CBT regional a cada registro de trabajador formal mediante un join por año y región.
 
 ```{r}
 formales_df <- formales_df |>
   left_join(cbt_long, by = c("ANO4", "REGION"))
 ```
 
-Tabla de resumen
-
+Vista previa del resultado del join:
 
 ```{r}
 formales_df |> select(ANO4, REGION, cbt_valor) |> head(10)
 ```
 
-## métrica A: tasa de trabajadores pobres según jornada laboral (part-time, completa, sobreocupado)
+## Métrica A: tasa de trabajadores pobres según jornada laboral
 
-Clasificamos a cada trabajador formal como "pobre" si su ingreso de la ocupación principal (P21) no alcanza a cubrir la Canasta Básica Total de su región. Cabe aclarar que la CBT está expresada por adulto equivalente, es decir, representa el costo de cubrir las necesidades básicas de un adulto de referencia (varón de 30-60 años). Por lo tanto, lo que medimos aquí es si el salario individual del trabajador formal alcanza al menos para cubrir sus propias necesidades básicas, sin considerar la carga familiar. Esta es una simplificación metodológica, puesto que en la práctica, muchos trabajadores deben sostener hogares con varios miembros. Aún así, no alcanzar la CBT individual es un umbral mínimo que evidencia con claridad la insuficiencia del ingreso laboral.
+Se clasifica a cada trabajador formal como "pobre" si su ingreso de la ocupación principal (`P21`) no alcanza la CBT de su región. Dado que la CBT está expresada por adulto equivalente (varón de 30–60 años), lo que se mide es si el salario individual cubre al menos las necesidades básicas propias, sin considerar la carga familiar. Se trata de una simplificación metodológica: no alcanzar siquiera este umbral mínimo evidencia con claridad la insuficiencia del ingreso laboral.
 
 ```{r}
 formales_df <- formales_df |>
   mutate(trabajador_pobre = ifelse(P21 < cbt_valor, 1, 0))
 ```
 
-Calculamos la tasa de trabajadores pobres por tipo de jornada y año.
+Tasa de trabajadores pobres por tipo de jornada y año:
 
 ```{r}
 tasa_por_jornada <- formales_df |>
@@ -445,3 +443,17 @@ ggplot(comparativo, aes(x = reorder(region_nombre, valor),
     panel.spacing    = unit(1.5, "lines")
   )
 ```
+
+## Conclusiones
+
+El análisis permite identificar algunas tendencias relevantes sobre la situación del trabajador formal en Argentina:
+
+- **La formalidad no garantiza ingresos suficientes.** Una proporción no menor de trabajadores registrados percibe ingresos por debajo de la Canasta Básica Total, lo que pone en cuestión la idea de que el empleo formal constituye, por sí solo, una protección contra la pobreza.
+
+- **La jornada laboral importa, pero no resuelve.** Como es esperable, los trabajadores de jornada parcial presentan tasas de pobreza más altas. Sin embargo, el fenómeno persiste incluso entre quienes trabajan jornada completa o se encuentran sobreocupados, lo que sugiere que el problema no radica únicamente en la cantidad de horas trabajadas sino en el nivel de los salarios.
+
+- **Las disparidades regionales son marcadas.** Tanto en poder adquisitivo como en incidencia de la pobreza laboral, las diferencias entre regiones reflejan desigualdades estructurales que trascienden el ciclo económico. Algunas regiones muestran deterioros interanuales más pronunciados que otras.
+
+- **La comparación interanual revela la dinámica del problema.** La variación entre el 4° trimestre de 2024 y el de 2025 permite observar si la situación tiende a mejorar o a agravarse, más allá de la foto estática de un momento puntual.
+
+En síntesis, el indicador propuesto —cruzar ingresos individuales de la EPH con la CBT regionalizada— ofrece una herramienta sencilla pero informativa para monitorear la calidad del empleo formal y sus límites como mecanismo de inclusión social.

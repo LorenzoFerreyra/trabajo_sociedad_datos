@@ -72,6 +72,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="nuevo_indicador_tp_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="nuevo_indicador_tp_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="nuevo_indicador_tp_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="nuevo_indicador_tp_files/libs/htmltools-fill-0.5.9/fill.css" rel="stylesheet">
+
+<script src="nuevo_indicador_tp_files/libs/htmlwidgets-1.6.4/htmlwidgets.js"></script>
+
+<link href="nuevo_indicador_tp_files/libs/datatables-css-0.0.0/datatables-crosstalk.css" rel="stylesheet">
+
+<script src="nuevo_indicador_tp_files/libs/datatables-binding-0.34.0/datatables.js"></script>
+
+<script src="nuevo_indicador_tp_files/libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+
+<link href="nuevo_indicador_tp_files/libs/dt-core-1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
+
+<link href="nuevo_indicador_tp_files/libs/dt-core-1.13.6/css/jquery.dataTables.extra.css" rel="stylesheet">
+
+<script src="nuevo_indicador_tp_files/libs/dt-core-1.13.6/js/jquery.dataTables.min.js"></script>
+
+<link href="nuevo_indicador_tp_files/libs/crosstalk-1.2.2/css/crosstalk.min.css" rel="stylesheet">
+
+<script src="nuevo_indicador_tp_files/libs/crosstalk-1.2.2/js/crosstalk.min.js"></script>
+
 
 
 </head>
@@ -118,7 +138,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 ✖ dplyr::lag()    masks stats::lag()
 ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
 </div>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DT)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>Abrimos los dos excels de interés</p>
 <div class="cell">
@@ -175,7 +196,453 @@ Caused by warning:
 <span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    PP3E_TOT <span class="sc">&gt;</span> <span class="dv">48</span>  <span class="sc">~</span> <span class="st">"sobreocupado"</span></span>
 <span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  ))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Seguimos con la Canasta Básica Total (CBT).</p>
+<p>Seguimos con la Canasta Básica Total (CBT). El objetivo es quedarse con dos puntos de interés en el tiempo, el cuarto trimestre de 2025 y su equivalente del año 2024. También se saca un promedio de los meses dentro del trimestre, dado que originalmente tenemos distintas dimensiones de tiempo en ambos datasets.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>cbt_4t_2024 <span class="ot">&lt;-</span> cbt_df <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(indice_tiempo <span class="sc">&gt;=</span> <span class="st">"2024-10-01"</span>, indice_tiempo <span class="sc">&lt;=</span> <span class="st">"2024-12-01"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), mean)) <span class="sc">|&gt;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ANO4 =</span> <span class="dv">2024</span>, <span class="at">TRIMESTRE =</span> <span class="dv">4</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>cbt_4t_2025 <span class="ot">&lt;-</span> cbt_df <span class="sc">|&gt;</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(indice_tiempo <span class="sc">&gt;=</span> <span class="st">"2025-10-01"</span>, indice_tiempo <span class="sc">&lt;=</span> <span class="st">"2025-12-01"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), mean)) <span class="sc">|&gt;</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ANO4 =</span> <span class="dv">2025</span>, <span class="at">TRIMESTRE =</span> <span class="dv">4</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>cbt_trimestres <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(cbt_4t_2024, cbt_4t_2025)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>La idea ahora es hacer el join con formales_df. El problema es que la CBT está en formato ancho (una columna por región) y la EPH tiene la región como un código numérico en la columna REGION. Para ello, la idea es pivotear la CBT a formato largo y mapear los códigos uno a uno.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>cbt_long <span class="ot">&lt;-</span> cbt_trimestres <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">c</span>(gran_buenos_aires, cuyo, noreste, noroeste, pampeana, patagonia),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to =</span> <span class="st">"region_nombre"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"cbt_valor"</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">REGION =</span> <span class="fu">case_when</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    region_nombre <span class="sc">==</span> <span class="st">"gran_buenos_aires"</span> <span class="sc">~</span> <span class="dv">01</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    region_nombre <span class="sc">==</span> <span class="st">"noroeste"</span>          <span class="sc">~</span> <span class="dv">40</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    region_nombre <span class="sc">==</span> <span class="st">"noreste"</span>           <span class="sc">~</span> <span class="dv">41</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    region_nombre <span class="sc">==</span> <span class="st">"cuyo"</span>              <span class="sc">~</span> <span class="dv">42</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    region_nombre <span class="sc">==</span> <span class="st">"pampeana"</span>          <span class="sc">~</span> <span class="dv">43</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    region_nombre <span class="sc">==</span> <span class="st">"patagonia"</span>         <span class="sc">~</span> <span class="dv">44</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  ))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Join con formales_df</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>formales_df <span class="ot">&lt;-</span> formales_df <span class="sc">|&gt;</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(cbt_long, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"ANO4"</span>, <span class="st">"REGION"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Tabla de resumen</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>formales_df <span class="sc">|&gt;</span> <span class="fu">select</span>(ANO4, REGION, cbt_valor) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">10</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   ANO4 REGION cbt_valor
+1  2025     40  328204.1
+2  2025     40  328204.1
+3  2025     40  328204.1
+4  2025     40  328204.1
+5  2025     40  328204.1
+6  2025     40  328204.1
+7  2025     43  402749.3
+8  2025     43  402749.3
+9  2025     43  402749.3
+10 2025     43  402749.3</code></pre>
+</div>
+</div>
+<section id="métrica-a-tasa-de-trabajadores-pobres-según-jornada-laboral-part-time-completa-sobreocupado" class="level2">
+<h2 class="anchored" data-anchor-id="métrica-a-tasa-de-trabajadores-pobres-según-jornada-laboral-part-time-completa-sobreocupado">métrica A: tasa de trabajadores pobres según jornada laboral (part-time, completa, sobreocupado)</h2>
+<p>Clasificamos a cada trabajador formal como “pobre” si su ingreso de la ocupación principal (P21) no alcanza a cubrir la Canasta Básica Total de su región. Cabe aclarar que la CBT está expresada por adulto equivalente, es decir, representa el costo de cubrir las necesidades básicas de un adulto de referencia (varón de 30-60 años). Por lo tanto, lo que medimos aquí es si el salario individual del trabajador formal alcanza al menos para cubrir sus propias necesidades básicas, sin considerar la carga familiar. Esta es una simplificación metodológica, puesto que en la práctica, muchos trabajadores deben sostener hogares con varios miembros. Aún así, no alcanzar la CBT individual es un umbral mínimo que evidencia con claridad la insuficiencia del ingreso laboral.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>formales_df <span class="ot">&lt;-</span> formales_df <span class="sc">|&gt;</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">trabajador_pobre =</span> <span class="fu">ifelse</span>(P21 <span class="sc">&lt;</span> cbt_valor, <span class="dv">1</span>, <span class="dv">0</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Calculamos la tasa de trabajadores pobres por tipo de jornada y año.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>tasa_por_jornada <span class="ot">&lt;-</span> formales_df <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(jornada), <span class="sc">!</span><span class="fu">is.na</span>(trabajador_pobre)) <span class="sc">|&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ANO4, jornada) <span class="sc">|&gt;</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">pobres =</span> <span class="fu">sum</span>(trabajador_pobre),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">tasa =</span> <span class="fu">mean</span>(trabajador_pobre) <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>tasa_por_jornada</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 5
+   ANO4 jornada             n pobres  tasa
+  &lt;dbl&gt; &lt;chr&gt;           &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt;
+1  2024 jornada_parcial  3972   1231  31.0
+2  2024 jornada_plena    6264   1583  25.3
+3  2024 sobreocupado     1768    501  28.3
+4  2025 jornada_parcial  3595   1052  29.3
+5  2025 jornada_plena    5795   1259  21.7
+6  2025 sobreocupado     1552    429  27.6</code></pre>
+</div>
+</div>
+<section id="gráfico-tasa-de-trabajadores-pobres-por-jornada-y-año" class="level3">
+<h3 class="anchored" data-anchor-id="gráfico-tasa-de-trabajadores-pobres-por-jornada-y-año">Gráfico: Tasa de trabajadores pobres por jornada y año</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(tasa_por_jornada, <span class="fu">aes</span>(<span class="at">x =</span> jornada, <span class="at">y =</span> tasa, <span class="at">fill =</span> <span class="fu">factor</span>(ANO4))) <span class="sc">+</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">position =</span> <span class="st">"dodge"</span>, <span class="at">width =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(<span class="fu">round</span>(tasa, <span class="dv">1</span>), <span class="st">"%"</span>)),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.7</span>),</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="fl">3.5</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"2024"</span> <span class="ot">=</span> <span class="st">"#2c7fb8"</span>, <span class="st">"2025"</span> <span class="ot">=</span> <span class="st">"#de2d26"</span>),</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"Año"</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Tasa de trabajadores pobres formales según jornada laboral"</span>,</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Ingreso ocupación principal (P21) vs. CBT regional. 4to trimestre"</span>,</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Tipo de jornada"</span>,</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Tasa (%)"</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>) <span class="sc">+</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>, <span class="cn">NA</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="nuevo_indicador_tp_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="tasa-general-sin-desagregar-por-jornada" class="level3">
+<h3 class="anchored" data-anchor-id="tasa-general-sin-desagregar-por-jornada">Tasa general (sin desagregar por jornada)</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>tasa_general <span class="ot">&lt;-</span> formales_df <span class="sc">|&gt;</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(trabajador_pobre)) <span class="sc">|&gt;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ANO4) <span class="sc">|&gt;</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="fu">n</span>(),</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">pobres =</span> <span class="fu">sum</span>(trabajador_pobre),</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">tasa =</span> <span class="fu">mean</span>(trabajador_pobre) <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>tasa_general</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 2 × 4
+   ANO4     n pobres  tasa
+  &lt;dbl&gt; &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt;
+1  2024 12004   3315  27.6
+2  2025 10942   2740  25.0</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(tasa_general, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(ANO4), <span class="at">y =</span> tasa, <span class="at">fill =</span> <span class="fu">factor</span>(ANO4))) <span class="sc">+</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>(<span class="at">width =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(<span class="fu">round</span>(tasa, <span class="dv">1</span>), <span class="st">"%"</span>)), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">size =</span> <span class="dv">4</span>) <span class="sc">+</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"2024"</span> <span class="ot">=</span> <span class="st">"#2c7fb8"</span>, <span class="st">"2025"</span> <span class="ot">=</span> <span class="st">"#de2d26"</span>)) <span class="sc">+</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Tasa general de trabajadores pobres formales"</span>,</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"4to trimestre (P21 vs. CBT regional)"</span>,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Año"</span>,</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Tasa (%)"</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>, <span class="cn">NA</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="nuevo_indicador_tp_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="tabla-resumen" class="level3">
+<h3 class="anchored" data-anchor-id="tabla-resumen">Tabla resumen</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>tabla_resumen <span class="ot">&lt;-</span> tasa_por_jornada <span class="sc">|&gt;</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tasa =</span> <span class="fu">round</span>(tasa, <span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from =</span> ANO4,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> <span class="fu">c</span>(n, pobres, tasa),</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_glue =</span> <span class="st">"{.value}_{ANO4}"</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="fu">datatable</span>(</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>  tabla_resumen,</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">caption =</span> <span class="st">"Trabajadores pobres formales por tipo de jornada (4T 2024 vs 4T 2025)"</span>,</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">options =</span> <span class="fu">list</span>(<span class="at">dom =</span> <span class="st">"t"</span>, <span class="at">pageLength =</span> <span class="dv">5</span>),</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">rownames =</span> <span class="cn">FALSE</span></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-7874e71688f755d7d855" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-7874e71688f755d7d855">{"x":{"filter":"none","vertical":false,"caption":"<caption>Trabajadores pobres formales por tipo de jornada (4T 2024 vs 4T 2025)<\/caption>","data":[["jornada_parcial","jornada_plena","sobreocupado"],[3972,6264,1768],[3595,5795,1552],[1231,1583,501],[1052,1259,429],[30.99,25.27,28.34],[29.26,21.73,27.64]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>jornada<\/th>\n      <th>n_2024<\/th>\n      <th>n_2025<\/th>\n      <th>pobres_2024<\/th>\n      <th>pobres_2025<\/th>\n      <th>tasa_2024<\/th>\n      <th>tasa_2025<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","pageLength":5,"columnDefs":[{"className":"dt-right","targets":[1,2,3,4,5,6]},{"name":"jornada","targets":0},{"name":"n_2024","targets":1},{"name":"n_2025","targets":2},{"name":"pobres_2024","targets":3},{"name":"pobres_2025","targets":4},{"name":"tasa_2024","targets":5},{"name":"tasa_2025","targets":6}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[5,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+</section>
+<section id="métrica-b-poder-adquisitivo-real-del-salario-formal-por-región" class="level2">
+<h2 class="anchored" data-anchor-id="métrica-b-poder-adquisitivo-real-del-salario-formal-por-región">Métrica B: poder adquisitivo real del salario formal por región</h2>
+<p>Calculamos el salario mediano de los trabajadores formales en cada región y lo expresamos en cantidad de Canastas Básicas Totales que cubre. Esto permite comparar el poder adquisitivo real entre regiones y entre años.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>salario_por_region <span class="ot">&lt;-</span> formales_df <span class="sc">|&gt;</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(P21), P21 <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ANO4, REGION) <span class="sc">|&gt;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">salario_mediano =</span> <span class="fu">median</span>(P21, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">cbt_promedio    =</span> <span class="fu">mean</span>(cbt_valor, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">poder_adq       =</span> salario_mediano <span class="sc">/</span> cbt_promedio,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups         =</span> <span class="st">"drop"</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>salario_comparado <span class="ot">&lt;-</span> salario_por_region <span class="sc">|&gt;</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from  =</span> ANO4,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> <span class="fu">c</span>(salario_mediano, cbt_promedio, poder_adq),</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_glue  =</span> <span class="st">"{.value}_{ANO4}"</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">region_nombre =</span> <span class="fu">case_when</span>(</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">01</span> <span class="sc">~</span> <span class="st">"Gran Buenos Aires"</span>,</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">40</span> <span class="sc">~</span> <span class="st">"Noroeste"</span>,</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">41</span> <span class="sc">~</span> <span class="st">"Noreste"</span>,</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">42</span> <span class="sc">~</span> <span class="st">"Cuyo"</span>,</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">43</span> <span class="sc">~</span> <span class="st">"Pampeana"</span>,</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">44</span> <span class="sc">~</span> <span class="st">"Patagonia"</span></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">delta_poder_adq =</span> poder_adq_2025 <span class="sc">-</span> poder_adq_2024,</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">tendencia       =</span> <span class="fu">ifelse</span>(delta_poder_adq <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="st">"Cayó"</span>, <span class="st">"Subió / Estable"</span>)</span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="gráfico-variación-del-poder-adquisitivo-real-por-región" class="level3">
+<h3 class="anchored" data-anchor-id="gráfico-variación-del-poder-adquisitivo-real-por-región">Gráfico: Variación del poder adquisitivo real por región</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(salario_comparado, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(region_nombre, delta_poder_adq),</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                              <span class="at">y =</span> delta_poder_adq, <span class="at">fill =</span> tendencia)) <span class="sc">+</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"gray40"</span>) <span class="sc">+</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">round</span>(delta_poder_adq, <span class="dv">2</span>)),</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">hjust =</span> <span class="fu">ifelse</span>(salario_comparado<span class="sc">$</span>delta_poder_adq <span class="sc">&gt;=</span> <span class="dv">0</span>, <span class="sc">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">size  =</span> <span class="fl">3.5</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Cayó"</span> <span class="ot">=</span> <span class="st">"#de2d26"</span>, <span class="st">"Subió / Estable"</span> <span class="ot">=</span> <span class="st">"#2c7fb8"</span>)) <span class="sc">+</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Variación del poder adquisitivo real por región"</span>,</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Diferencia en CBT cubiertas por el salario mediano (4T2024 vs. 4T2025)"</span>,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="cn">NULL</span>,</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">" CBTs cubiertas"</span>,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill     =</span> <span class="cn">NULL</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="nuevo_indicador_tp_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="tabla-poder-adquisitivo-por-región" class="level3">
+<h3 class="anchored" data-anchor-id="tabla-poder-adquisitivo-por-región">Tabla: poder adquisitivo por región</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>salario_comparado <span class="sc">|&gt;</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">Region              =</span> region_nombre,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Salario med. 2024</span><span class="st">`</span> <span class="ot">=</span> salario_mediano_2024,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Salario med. 2025</span><span class="st">`</span> <span class="ot">=</span> salario_mediano_2025,</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">CBTs cubiertas 2024</span><span class="st">`</span> <span class="ot">=</span> poder_adq_2024,</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">CBTs cubiertas 2025</span><span class="st">`</span> <span class="ot">=</span> poder_adq_2025,</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at"> CBTs</span><span class="st">`</span>             <span class="ot">=</span> delta_poder_adq,</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">Tendencia            =</span> tendencia</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">2</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datatable</span>(</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption  =</span> <span class="st">"Poder adquisitivo real del salario mediano formal por región"</span>,</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">options  =</span> <span class="fu">list</span>(<span class="at">dom =</span> <span class="st">"t"</span>, <span class="at">pageLength =</span> <span class="dv">6</span>),</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">rownames =</span> <span class="cn">FALSE</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-a2f9703a1e6b5fe58f87" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-a2f9703a1e6b5fe58f87">{"x":{"filter":"none","vertical":false,"caption":"<caption>Poder adquisitivo real del salario mediano formal por región<\/caption>","data":[["Gran Buenos Aires","Noroeste","Noreste","Cuyo","Pampeana","Patagonia"],[800000,600000,600000,700000,800000,960000],[1100000,850000,900000,1000000,1000000,1400000],[2.46,2.3,2.22,2.27,2.49,2.53],[2.7,2.59,2.63,2.58,2.48,2.93],[0.24,0.29,0.41,0.31,-0.01,0.4],["Subió / Estable","Subió / Estable","Subió / Estable","Subió / Estable","Cayó","Subió / Estable"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Region<\/th>\n      <th>Salario med. 2024<\/th>\n      <th>Salario med. 2025<\/th>\n      <th>CBTs cubiertas 2024<\/th>\n      <th>CBTs cubiertas 2025<\/th>\n      <th> CBTs<\/th>\n      <th>Tendencia<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","pageLength":6,"columnDefs":[{"className":"dt-right","targets":[1,2,3,4,5]},{"name":"Region","targets":0},{"name":"Salario med. 2024","targets":1},{"name":"Salario med. 2025","targets":2},{"name":"CBTs cubiertas 2024","targets":3},{"name":"CBTs cubiertas 2025","targets":4},{"name":" CBTs","targets":5},{"name":"Tendencia","targets":6}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[6,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+</section>
+<section id="métrica-c-tasa-de-trabajadores-pobres-formales-por-región" class="level2">
+<h2 class="anchored" data-anchor-id="métrica-c-tasa-de-trabajadores-pobres-formales-por-región">Métrica C: tasa de trabajadores pobres formales por región</h2>
+<p>Desagregamos la tasa de trabajadores pobres por región para identificar las disparidades geográficas y su evolución interanual.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>tasa_por_region <span class="ot">&lt;-</span> formales_df <span class="sc">|&gt;</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(trabajador_pobre)) <span class="sc">|&gt;</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ANO4, REGION) <span class="sc">|&gt;</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">tasa_pobres =</span> <span class="fu">mean</span>(trabajador_pobre) <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups     =</span> <span class="st">"drop"</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_from  =</span> ANO4,</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_from =</span> tasa_pobres,</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_prefix =</span> <span class="st">"tasa_"</span></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">region_nombre  =</span> <span class="fu">case_when</span>(</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">01</span> <span class="sc">~</span> <span class="st">"Gran Buenos Aires"</span>,</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">40</span> <span class="sc">~</span> <span class="st">"Noroeste"</span>,</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">41</span> <span class="sc">~</span> <span class="st">"Noreste"</span>,</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">42</span> <span class="sc">~</span> <span class="st">"Cuyo"</span>,</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">43</span> <span class="sc">~</span> <span class="st">"Pampeana"</span>,</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>      REGION <span class="sc">==</span> <span class="dv">44</span> <span class="sc">~</span> <span class="st">"Patagonia"</span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">delta_tasa     =</span> tasa_2025 <span class="sc">-</span> tasa_2024,</span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">tendencia      =</span> <span class="fu">ifelse</span>(delta_tasa <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">"Aumentó"</span>, <span class="st">"Bajó / Estable"</span>)</span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="gráfico-variación-en-la-tasa-de-trabajadores-pobres-por-región" class="level3">
+<h3 class="anchored" data-anchor-id="gráfico-variación-en-la-tasa-de-trabajadores-pobres-por-región">Gráfico: Variación en la tasa de trabajadores pobres por región</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(tasa_por_region, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(region_nombre, delta_tasa),</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">y =</span> delta_tasa, <span class="at">fill =</span> tendencia)) <span class="sc">+</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"gray40"</span>) <span class="sc">+</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(<span class="fu">round</span>(delta_tasa, <span class="dv">1</span>), <span class="st">" pp"</span>)),</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">hjust =</span> <span class="fu">ifelse</span>(tasa_por_region<span class="sc">$</span>delta_tasa <span class="sc">&gt;=</span> <span class="dv">0</span>, <span class="sc">-</span><span class="fl">0.2</span>, <span class="fl">1.2</span>),</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">size  =</span> <span class="fl">3.5</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Aumentó"</span> <span class="ot">=</span> <span class="st">"#de2d26"</span>, <span class="st">"Bajó / Estable"</span> <span class="ot">=</span> <span class="st">"#2c7fb8"</span>)) <span class="sc">+</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Variación en la tasa de trabajadores pobres formales por región"</span>,</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Diferencia en puntos porcentuales (4T2024 vs. 4T2025)"</span>,</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="cn">NULL</span>,</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">"puntos porcentuales"</span>,</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill     =</span> <span class="cn">NULL</span></span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">13</span>) <span class="sc">+</span></span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="nuevo_indicador_tp_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="tabla-tasa-de-trabajadores-pobres-por-región" class="level3">
+<h3 class="anchored" data-anchor-id="tabla-tasa-de-trabajadores-pobres-por-región">Tabla: tasa de trabajadores pobres por región</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>tasa_por_region <span class="sc">|&gt;</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">Region          =</span> region_nombre,</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Tasa 2024 (%)</span><span class="st">`</span> <span class="ot">=</span> tasa_2024,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Tasa 2025 (%)</span><span class="st">`</span> <span class="ot">=</span> tasa_2025,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Δ (pp)</span><span class="st">`</span>        <span class="ot">=</span> delta_tasa,</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Tendencia       =</span> tendencia</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">2</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datatable</span>(</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption  =</span> <span class="st">"Tasa de trabajadores pobres formales por región (4T 2024 vs. 4T 2025)"</span>,</span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">options  =</span> <span class="fu">list</span>(<span class="at">dom =</span> <span class="st">"t"</span>, <span class="at">pageLength =</span> <span class="dv">6</span>),</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">rownames =</span> <span class="cn">FALSE</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-c167bc2ff72662ebd23d" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-c167bc2ff72662ebd23d">{"x":{"filter":"none","vertical":false,"caption":"<caption>Tasa de trabajadores pobres formales por región (4T 2024 vs. 4T 2025)<\/caption>","data":[["Gran Buenos Aires","Noroeste","Noreste","Cuyo","Pampeana","Patagonia"],[35.88,13.31,28.21,27.25,33.86,21.2],[33.42,8,35.05,25.24,28.88,22.28],[-2.46,-5.31,6.84,-2,-4.98,1.08],["Bajó / Estable","Bajó / Estable","Aumentó","Bajó / Estable","Bajó / Estable","Aumentó"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Region<\/th>\n      <th>Tasa 2024 (%)<\/th>\n      <th>Tasa 2025 (%)<\/th>\n      <th>Δ (pp)<\/th>\n      <th>Tendencia<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","pageLength":6,"columnDefs":[{"className":"dt-right","targets":[1,2,3]},{"name":"Region","targets":0},{"name":"Tasa 2024 (%)","targets":1},{"name":"Tasa 2025 (%)","targets":2},{"name":"Δ (pp)","targets":3},{"name":"Tendencia","targets":4}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[6,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+</section>
+</section>
+<section id="resumen-regional-poder-adquisitivo-y-pobreza-laboral" class="level2">
+<h2 class="anchored" data-anchor-id="resumen-regional-poder-adquisitivo-y-pobreza-laboral">Resumen regional: poder adquisitivo y pobreza laboral</h2>
+<p>Combinamos ambas métricas regionales en una sola tabla y un gráfico comparativo.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>resumen_regional <span class="ot">&lt;-</span> salario_comparado <span class="sc">|&gt;</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(REGION, region_nombre, delta_poder_adq,</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">tendencia_salario =</span> tendencia) <span class="sc">|&gt;</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    tasa_por_region <span class="sc">|&gt;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(REGION, tasa_2024, tasa_2025, delta_tasa,</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">tendencia_pobres =</span> tendencia),</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"REGION"</span></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>resumen_regional <span class="sc">|&gt;</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">Region                  =</span> region_nombre,</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Δ poder adquisitivo</span><span class="st">`</span>   <span class="ot">=</span> delta_poder_adq,</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Salario real</span><span class="st">`</span>          <span class="ot">=</span> tendencia_salario,</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Tasa pobres 2024 (%)</span><span class="st">`</span>  <span class="ot">=</span> tasa_2024,</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Tasa pobres 2025 (%)</span><span class="st">`</span>  <span class="ot">=</span> tasa_2025,</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Δ tasa pobres (pp)</span><span class="st">`</span>    <span class="ot">=</span> delta_tasa,</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Pobreza laboral</span><span class="st">`</span>       <span class="ot">=</span> tendencia_pobres</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">2</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">datatable</span>(</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption  =</span> <span class="st">"Resumen regional: poder adquisitivo y pobreza laboral formal (4T2024 vs. 4T2025)"</span>,</span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">options  =</span> <span class="fu">list</span>(<span class="at">dom =</span> <span class="st">"t"</span>, <span class="at">pageLength =</span> <span class="dv">6</span>),</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">rownames =</span> <span class="cn">FALSE</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div class="datatables html-widget html-fill-item" id="htmlwidget-c73f301bfb1060112728" style="width:100%;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-c73f301bfb1060112728">{"x":{"filter":"none","vertical":false,"caption":"<caption>Resumen regional: poder adquisitivo y pobreza laboral formal (4T2024 vs. 4T2025)<\/caption>","data":[["Gran Buenos Aires","Noroeste","Noreste","Cuyo","Pampeana","Patagonia"],[0.24,0.29,0.41,0.31,-0.01,0.4],["Subió / Estable","Subió / Estable","Subió / Estable","Subió / Estable","Cayó","Subió / Estable"],[35.88,13.31,28.21,27.25,33.86,21.2],[33.42,8,35.05,25.24,28.88,22.28],[-2.46,-5.31,6.84,-2,-4.98,1.08],["Bajó / Estable","Bajó / Estable","Aumentó","Bajó / Estable","Bajó / Estable","Aumentó"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Region<\/th>\n      <th>Δ poder adquisitivo<\/th>\n      <th>Salario real<\/th>\n      <th>Tasa pobres 2024 (%)<\/th>\n      <th>Tasa pobres 2025 (%)<\/th>\n      <th>Δ tasa pobres (pp)<\/th>\n      <th>Pobreza laboral<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","pageLength":6,"columnDefs":[{"className":"dt-right","targets":[1,3,4,5]},{"name":"Region","targets":0},{"name":"Δ poder adquisitivo","targets":1},{"name":"Salario real","targets":2},{"name":"Tasa pobres 2024 (%)","targets":3},{"name":"Tasa pobres 2025 (%)","targets":4},{"name":"Δ tasa pobres (pp)","targets":5},{"name":"Pobreza laboral","targets":6}],"order":[],"autoWidth":false,"orderClasses":false,"lengthMenu":[6,10,25,50,100]}},"evals":[],"jsHooks":[]}</script>
+</div>
+</div>
+<section id="gráfico-comparativo-impacto-regional" class="level3">
+<h3 class="anchored" data-anchor-id="gráfico-comparativo-impacto-regional">Gráfico comparativo: impacto regional</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>comparativo <span class="ot">&lt;-</span> resumen_regional <span class="sc">|&gt;</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(region_nombre, delta_poder_adq, delta_tasa) <span class="sc">|&gt;</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols      =</span> <span class="fu">c</span>(delta_poder_adq, delta_tasa),</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">names_to  =</span> <span class="st">"metrica"</span>,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">values_to =</span> <span class="st">"valor"</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">metrica =</span> <span class="fu">recode</span>(metrica,</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>                     <span class="at">delta_poder_adq =</span> <span class="st">"Δ Poder adquisitivo (CBTs)"</span>,</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>                     <span class="at">delta_tasa      =</span> <span class="st">"Δ Tasa trabajadores pobres (pp)"</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">direccion =</span> <span class="fu">ifelse</span>(valor <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="st">"Deterioro"</span>, <span class="st">"Mejora"</span>)</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(comparativo, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(region_nombre, valor),</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>                        <span class="at">y =</span> valor, <span class="at">fill =</span> direccion)) <span class="sc">+</span></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"gray40"</span>) <span class="sc">+</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> metrica, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(</span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Deterioro"</span> <span class="ot">=</span> <span class="st">"#de2d26"</span>, <span class="st">"Mejora"</span> <span class="ot">=</span> <span class="st">"#2c7fb8"</span>),</span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">name   =</span> <span class="cn">NULL</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Impacto regional sobre el trabajador pobre formal"</span>,</span>
+<span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"4° trimestre 2024 vs. 4° trimestre 2025"</span>,</span>
+<span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="cn">NULL</span>,</span>
+<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="cn">NULL</span></span>
+<span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb32-32"><a href="#cb32-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb32-33"><a href="#cb32-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
+<span id="cb32-34"><a href="#cb32-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">legend.position  =</span> <span class="st">"top"</span>,</span>
+<span id="cb32-35"><a href="#cb32-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">strip.text       =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>),</span>
+<span id="cb32-36"><a href="#cb32-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">panel.spacing    =</span> <span class="fu">unit</span>(<span class="fl">1.5</span>, <span class="st">"lines"</span>)</span>
+<span id="cb32-37"><a href="#cb32-37" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="nuevo_indicador_tp_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
 
 </main>
 <!-- /main column -->
