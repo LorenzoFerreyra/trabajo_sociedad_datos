@@ -214,3 +214,234 @@ datatable(
   rownames = FALSE
 )
 ```
+
+## Métrica B: poder adquisitivo real del salario formal por región
+
+Calculamos el salario mediano de los trabajadores formales en cada región y lo expresamos en cantidad de Canastas Básicas Totales que cubre. Esto permite comparar el poder adquisitivo real entre regiones y entre años.
+
+```{r}
+salario_por_region <- formales_df |>
+  filter(!is.na(P21), P21 > 0) |>
+  group_by(ANO4, REGION) |>
+  summarise(
+    salario_mediano = median(P21, na.rm = TRUE),
+    cbt_promedio    = mean(cbt_valor, na.rm = TRUE),
+    poder_adq       = salario_mediano / cbt_promedio,
+    .groups         = "drop"
+  )
+
+salario_comparado <- salario_por_region |>
+  pivot_wider(
+    names_from  = ANO4,
+    values_from = c(salario_mediano, cbt_promedio, poder_adq),
+    names_glue  = "{.value}_{ANO4}"
+  ) |>
+  mutate(
+    region_nombre = case_when(
+      REGION == 01 ~ "Gran Buenos Aires",
+      REGION == 40 ~ "Noroeste",
+      REGION == 41 ~ "Noreste",
+      REGION == 42 ~ "Cuyo",
+      REGION == 43 ~ "Pampeana",
+      REGION == 44 ~ "Patagonia"
+    ),
+    delta_poder_adq = poder_adq_2025 - poder_adq_2024,
+    tendencia       = ifelse(delta_poder_adq < 0, "Cayó", "Subió / Estable")
+  )
+```
+
+### Gráfico: Variación del poder adquisitivo real por región
+
+```{r}
+ggplot(salario_comparado, aes(x = reorder(region_nombre, delta_poder_adq),
+                              y = delta_poder_adq, fill = tendencia)) +
+  geom_col() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+  geom_text(
+    aes(label = round(delta_poder_adq, 2)),
+    hjust = ifelse(salario_comparado$delta_poder_adq >= 0, -0.2, 1.2),
+    size  = 3.5
+  ) +
+  coord_flip() +
+  scale_fill_manual(values = c("Cayó" = "#de2d26", "Subió / Estable" = "#2c7fb8")) +
+  labs(
+    title    = "Variación del poder adquisitivo real por región",
+    subtitle = "Diferencia en CBTs cubiertas por el salario mediano — 4T2024 vs. 4T2025",
+    x        = NULL,
+    y        = " CBTs cubiertas",
+    fill     = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top")
+```
+
+### Tabla: poder adquisitivo por región
+
+```{r}
+salario_comparado |>
+  select(
+    Region              = region_nombre,
+    `Salario med. 2024` = salario_mediano_2024,
+    `Salario med. 2025` = salario_mediano_2025,
+    `CBTs cubiertas 2024` = poder_adq_2024,
+    `CBTs cubiertas 2025` = poder_adq_2025,
+    ` CBTs`             = delta_poder_adq,
+    Tendencia            = tendencia
+  ) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2))) |>
+  datatable(
+    caption  = "Poder adquisitivo real del salario mediano formal por región",
+    options  = list(dom = "t", pageLength = 6),
+    rownames = FALSE
+  )
+```
+
+## Métrica C: tasa de trabajadores pobres formales por región
+
+Desagregamos la tasa de trabajadores pobres por región para identificar las disparidades geográficas y su evolución interanual.
+
+```{r}
+tasa_por_region <- formales_df |>
+  filter(!is.na(trabajador_pobre)) |>
+  group_by(ANO4, REGION) |>
+  summarise(
+    tasa_pobres = mean(trabajador_pobre) * 100,
+    .groups     = "drop"
+  ) |>
+  pivot_wider(
+    names_from  = ANO4,
+    values_from = tasa_pobres,
+    names_prefix = "tasa_"
+  ) |>
+  mutate(
+    region_nombre  = case_when(
+      REGION == 01 ~ "Gran Buenos Aires",
+      REGION == 40 ~ "Noroeste",
+      REGION == 41 ~ "Noreste",
+      REGION == 42 ~ "Cuyo",
+      REGION == 43 ~ "Pampeana",
+      REGION == 44 ~ "Patagonia"
+    ),
+    delta_tasa     = tasa_2025 - tasa_2024,
+    tendencia      = ifelse(delta_tasa > 0, "Aumentó", "Bajó / Estable")
+  )
+```
+
+### Gráfico: Variación en la tasa de trabajadores pobres por región
+
+```{r}
+ggplot(tasa_por_region, aes(x = reorder(region_nombre, delta_tasa),
+                            y = delta_tasa, fill = tendencia)) +
+  geom_col() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+  geom_text(
+    aes(label = paste0(round(delta_tasa, 1), " pp")),
+    hjust = ifelse(tasa_por_region$delta_tasa >= 0, -0.2, 1.2),
+    size  = 3.5
+  ) +
+  coord_flip() +
+  scale_fill_manual(values = c("Aumentó" = "#de2d26", "Bajó / Estable" = "#2c7fb8")) +
+  labs(
+    title    = "Variación en la tasa de trabajadores pobres formales por región",
+    subtitle = "Diferencia en puntos porcentuales — 4T2024 vs. 4T2025",
+    x        = NULL,
+    y        = "puntos porcentuales",
+    fill     = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "top")
+```
+
+### Tabla: tasa de trabajadores pobres por región
+
+```{r}
+tasa_por_region |>
+  select(
+    Region          = region_nombre,
+    `Tasa 2024 (%)` = tasa_2024,
+    `Tasa 2025 (%)` = tasa_2025,
+    `Δ (pp)`        = delta_tasa,
+    Tendencia       = tendencia
+  ) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2))) |>
+  datatable(
+    caption  = "Tasa de trabajadores pobres formales por región (4T 2024 vs. 4T 2025)",
+    options  = list(dom = "t", pageLength = 6),
+    rownames = FALSE
+  )
+```
+
+## Resumen regional: poder adquisitivo y pobreza laboral
+
+Combinamos ambas métricas regionales en una sola tabla y un gráfico comparativo.
+
+```{r}
+resumen_regional <- salario_comparado |>
+  select(REGION, region_nombre, delta_poder_adq,
+         tendencia_salario = tendencia) |>
+  left_join(
+    tasa_por_region |>
+      select(REGION, tasa_2024, tasa_2025, delta_tasa,
+             tendencia_pobres = tendencia),
+    by = "REGION"
+  )
+
+resumen_regional |>
+  select(
+    Region                  = region_nombre,
+    `Δ poder adquisitivo`   = delta_poder_adq,
+    `Salario real`          = tendencia_salario,
+    `Tasa pobres 2024 (%)`  = tasa_2024,
+    `Tasa pobres 2025 (%)`  = tasa_2025,
+    `Δ tasa pobres (pp)`    = delta_tasa,
+    `Pobreza laboral`       = tendencia_pobres
+  ) |>
+  mutate(across(where(is.numeric), \(x) round(x, 2))) |>
+  datatable(
+    caption  = "Resumen regional: poder adquisitivo y pobreza laboral formal (4T2024 vs. 4T2025)",
+    options  = list(dom = "t", pageLength = 6),
+    rownames = FALSE
+  )
+```
+
+### Gráfico comparativo: impacto regional
+
+```{r}
+comparativo <- resumen_regional |>
+  select(region_nombre, delta_poder_adq, delta_tasa) |>
+  pivot_longer(
+    cols      = c(delta_poder_adq, delta_tasa),
+    names_to  = "metrica",
+    values_to = "valor"
+  ) |>
+  mutate(
+    metrica = recode(metrica,
+                     delta_poder_adq = "Δ Poder adquisitivo (CBTs)",
+                     delta_tasa      = "Δ Tasa trabajadores pobres (pp)"
+    ),
+    direccion = ifelse(valor > 0, "Deterioro", "Mejora")
+  )
+
+ggplot(comparativo, aes(x = reorder(region_nombre, valor),
+                        y = valor, fill = direccion)) +
+  geom_col() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray40") +
+  coord_flip() +
+  facet_wrap(~ metrica, scales = "free_x") +
+  scale_fill_manual(
+    values = c("Deterioro" = "#de2d26", "Mejora" = "#2c7fb8"),
+    name   = NULL
+  ) +
+  labs(
+    title    = "Impacto regional sobre el trabajador pobre formal",
+    subtitle = "4° trimestre 2024 vs. 4° trimestre 2025",
+    x        = NULL,
+    y        = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position  = "top",
+    strip.text       = element_text(face = "bold"),
+    panel.spacing    = unit(1.5, "lines")
+  )
+```
